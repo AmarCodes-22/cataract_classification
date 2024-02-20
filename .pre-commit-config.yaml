@@ -12,7 +12,9 @@ repos:
     rev: 24.2.0
     hooks:
     -   id: black
+        args: ["--line-length", "120"]
     -   id: black-jupyter
+        args: ["--line-length", "120"]
 -   repo: https://github.com/PyCQA/isort
     rev: 5.13.2
     hooks:

@@ -1,1 +1,5 @@
 pre-commit
+torch
+lightning
+torcheval
+transformers
