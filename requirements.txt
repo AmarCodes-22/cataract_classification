@@ -5,3 +5,5 @@ torcheval
 transformers
 albumentations
 datasets
+hydra-core
+wandb

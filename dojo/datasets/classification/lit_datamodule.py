@@ -1,14 +1,14 @@
 import os
 from typing import Optional
 
-import lightning.pytorch as pl
+import lightning as L
 from datasets import load_dataset
 from torch.utils.data import DataLoader
 
 from .main import ClassificationDataset
 
 
-class ClassificationLitDataModule(pl.LightningDataModule):
+class ClassificationLitDataModule(L.LightningDataModule):
     def __init__(
         self,
         train_dataset_dir: Optional[str] = None,

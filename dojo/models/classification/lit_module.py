@@ -2,7 +2,7 @@ import os
 import shutil
 from typing import Optional
 
-import pytorch_lightning as pl
+import lightning as L
 import torch
 from torcheval.metrics import Mean, MulticlassAccuracy
 
@@ -11,7 +11,7 @@ from dojo.utils import get_exp_dir
 from .networks import ClassificationModel, ExportWrapper
 
 
-class ClassificationLitModule(pl.LightningModule):
+class ClassificationLitModule(L.LightningModule):
     def __init__(
         self,
         num_classes: int,
