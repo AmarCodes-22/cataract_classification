@@ -11,7 +11,7 @@ from dojo.utils import get_exp_dir
 from .networks import ClassificationModel, ExportWrapper
 
 
-class LitClassificationModel(pl.LightningModule):
+class ClassificationLitModule(pl.LightningModule):
     def __init__(
         self,
         num_classes: int,
@@ -32,7 +32,7 @@ class LitClassificationModel(pl.LightningModule):
         self.save_hyperparameters()
 
         print(f"Initialized {self.__class__.__name__} with the following hyperparameters:")
-        print(self.hparams)
+        print(self.hparams, end="\n\n")
 
     def setup(self, stage):
         if stage == "fit":
