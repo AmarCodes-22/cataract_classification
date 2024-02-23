@@ -99,7 +99,7 @@ class ClassificationLitModule(L.LightningModule):
         return {"loss": loss}
 
     def on_predict_start(self):
-        self.prediction_output_dir = get_exp_dir(self.trainer, stage="predict")
+        self.prediction_output_dir = os.path.join(get_exp_dir(self.trainer.logger), "predict")
 
         self.dataset_idx_to_class = self.trainer.datamodule.dataset_idx_to_class
         for _, v in self.dataset_idx_to_class.items():

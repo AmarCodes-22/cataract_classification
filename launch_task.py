@@ -17,8 +17,10 @@ def launch_task(cfg: DictConfig) -> None:
     if cfg.project_type == "classification":
         if cfg.task == "train":
             train_classification(cfg)
-        if cfg.task == "test":
+        elif cfg.task == "test":
             test_classification(cfg)
+        elif cfg.task == "predict":
+            predict_classification(cfg)
         pass
     else:
         pass

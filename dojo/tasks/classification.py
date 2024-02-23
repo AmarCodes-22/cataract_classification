@@ -37,8 +37,9 @@ def test(cfg):
     trainer.test(model=model, datamodule=dataset, ckpt_path=resume_ckpt_fpath)
 
 
-def predict():
-    pass
+def predict(cfg):
+    model, dataset, logger, callbacks, trainer, resume_ckpt_fpath = initialize_modules(cfg)
+    trainer.predict(model=model, datamodule=dataset, ckpt_path=resume_ckpt_fpath)
 
 
 def export():
