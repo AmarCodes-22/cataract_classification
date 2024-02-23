@@ -46,6 +46,6 @@ class ExportWrapper(nn.Module):
         x = x.permute(0, 3, 1, 2)
         with autocast(enabled=True):
             x = x / 255
-            x = self.model(x)
+            x = self.model(x).logits
             x = torch.softmax(x, dim=1)
         return x

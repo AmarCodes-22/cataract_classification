@@ -1,5 +1,5 @@
 project_type: classification
-task: predict
+task: export
 resume: True
 resume_epoch: best
 trainer:

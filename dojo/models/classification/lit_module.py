@@ -3,6 +3,8 @@ import shutil
 from typing import Optional
 
 import lightning as L
+import numpy as np
+import onnxruntime
 import torch
 from torcheval.metrics import Mean, MulticlassAccuracy
 
@@ -143,6 +145,7 @@ class ClassificationLitModule(L.LightningModule):
 
         untraced_outputs = export_wrapper(example_inputs)
         print("Output before trace", untraced_outputs.shape, untraced_outputs.dtype)
+        print(f"{untraced_outputs = }")
 
         print("Model input", example_inputs.shape, example_inputs.dtype)
         traced_module = torch.jit.trace(export_wrapper, example_inputs)
@@ -150,8 +153,38 @@ class ClassificationLitModule(L.LightningModule):
 
         traced_outputs = traced_module(example_inputs)
         print("Output after trace", traced_outputs.shape, traced_outputs.dtype)
+        print(f"{traced_outputs = }")
 
         if file_path is not None:
             traced_module.save(file_path)
 
         return traced_module
+
+    def to_onnx(self, file_path: Optional[str] = None):
+        export_wrapper = ExportWrapper(self.model)
+
+        example_inputs = torch.rand(32, 224, 224, 3, dtype=torch.float32, device=self.device)
+        example_inputs = (example_inputs * 255).to(torch.uint8)
+        export_wrapper.eval()
+
+        untraced_output = export_wrapper(example_inputs)
+        print("Output before trace", untraced_output.shape, untraced_output.dtype)
+        print(f"{untraced_output = }")
+
+        torch.onnx.export(export_wrapper, example_inputs, file_path, export_params=True)
+
+        model = onnxruntime.InferenceSession(file_path, providers=["CUDAExecutionProvider"])
+
+        input_name = model.get_inputs()[0].name
+        traced_output = model.run(None, {input_name: example_inputs.to("cpu").numpy()})
+
+        print("Output after trace", traced_output[0].shape, traced_output[0].dtype)
+        print(f"{traced_output = }")
+
+        np.testing.assert_allclose(
+            untraced_output.cpu().detach().numpy(),
+            traced_output[0],
+            rtol=1e-03,
+            atol=1e-03,
+            err_msg="The outputs do not match!",
+        )

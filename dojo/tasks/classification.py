@@ -42,5 +42,6 @@ def predict(cfg):
     trainer.predict(model=model, datamodule=dataset, ckpt_path=resume_ckpt_fpath)
 
 
-def export():
-    pass
+def export(cfg):
+    model, dataset, logger, callbacks, trainer, resume_ckpt_fpath = initialize_modules(cfg)
+    model.to_onnx(resume_ckpt_fpath.replace(".ckpt", ".onnx"))

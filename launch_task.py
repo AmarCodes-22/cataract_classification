@@ -21,6 +21,8 @@ def launch_task(cfg: DictConfig) -> None:
             test_classification(cfg)
         elif cfg.task == "predict":
             predict_classification(cfg)
+        elif cfg.task == "export":
+            export_classification(cfg)
         pass
     else:
         pass
