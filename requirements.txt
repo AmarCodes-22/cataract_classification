@@ -1,1 +1,12 @@
 pre-commit
+torch
+lightning
+torcheval
+transformers
+albumentations
+datasets
+hydra-core
+wandb
+onnx
+onnxruntime-gpu
+onnxruntime
