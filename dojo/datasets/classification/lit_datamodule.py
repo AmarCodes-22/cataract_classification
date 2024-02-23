@@ -1,9 +1,12 @@
 import os
-from typing import Optional
+import subprocess
+from typing import Literal, Optional
 
 import lightning as L
 from datasets import load_dataset
 from torch.utils.data import DataLoader
+
+import wandb
 
 from .main import ClassificationDataset
 
@@ -19,6 +22,7 @@ class ClassificationLitDataModule(L.LightningDataModule):
         image_size: int = 224,
         batch_size: int = 16,
         num_workers: int = 16,
+        s3_folder: str = "s3://ai-data-log/dojo-testing",
     ) -> None:
         super().__init__()
 
@@ -43,6 +47,11 @@ class ClassificationLitDataModule(L.LightningDataModule):
                 hf_dataset=dataset_split["test"], image_size=self.hparams["image_size"], cache=self.hparams["cache"]
             )
             self.dataset_idx_to_class = self.train_dataset.idx_to_class
+            self.log_version(
+                self.trainer.logger,
+                local_dataset_dir=train_dir,
+                stage=stage,
+            )
 
         elif stage == "test":
             test_dir = self.hparams["test_dataset_dir"]
@@ -50,6 +59,11 @@ class ClassificationLitDataModule(L.LightningDataModule):
 
             self.test_dataset = ClassificationDataset(
                 dataset_dir=test_dir, image_size=self.hparams["image_size"], cache=self.hparams["cache"]
+            )
+            self.log_version(
+                self.trainer.logger,
+                local_dataset_dir=test_dir,
+                stage=stage,
             )
         elif stage == "predict":
             self.predict_dataset = ClassificationDataset(
@@ -88,3 +102,21 @@ class ClassificationLitDataModule(L.LightningDataModule):
 
     def load_state_dict(self, state_dict):
         self.dataset_idx_to_class = state_dict["dataset_idx_to_class"]
+
+    # todo: version logging only works when checksum=True
+    def log_version(self, logger: L.pytorch.loggers.WandbLogger, local_dataset_dir: str, stage: Literal["fit", "test"]):
+        artifact_type = "dataset"
+
+        # push dataset to s3
+        s3_uri = f"{self.hparams['s3_folder']}/{logger.experiment.project}/{artifact_type}/{stage}"
+        aws_cli_command = f"aws s3 sync {local_dataset_dir} {s3_uri}"
+        subprocess.run(aws_cli_command, shell=True, capture_output=False, text=True)
+
+        # log to wandb as reference artifact
+        # todo: add metadata to artifact
+        artifact = wandb.Artifact(f"dataset-{stage}", type=artifact_type)
+
+        # todo: using checksum=True takes too much time. can i use s3 bucket's metadata instead? (e.g. last modified date, size, etc.)
+        artifact.add_reference(s3_uri, checksum=False)
+
+        logger.use_artifact(artifact)

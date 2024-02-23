@@ -1,20 +1,20 @@
 project_type: classification
-task: export
-resume: True
+task: train
+resume: False
 resume_epoch: best
 trainer:
   precision: 16-mixed
-  max_epochs: 10
+  max_epochs: 1
 model:
   num_classes: 10
 dataset:
-  train_dataset_dir: /home/ubuntu/members/amar/dojo/test/cifar10-images/train
+  train_dataset_dir: /home/ubuntu/members/amar/dojo/test/cifar10-images/train2
   val_ratio: 0.2
   test_dataset_dir: /home/ubuntu/members/amar/dojo/test/cifar10-images/test
   predict_dataset_dir: /home/ubuntu/members/amar/dojo/test/cifar10-images/test
 logger:
   project: test-dojo-v2
-  id: dudd48z9
+  id: null
   resume: ${resume}
 callbacks:
   checkpoints:
