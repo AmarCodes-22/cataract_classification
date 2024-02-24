@@ -9,6 +9,7 @@ from dojo import (
 )
 
 
+# todo: assert project names follow a certain convention
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def launch_task(cfg: DictConfig) -> None:
     print("Launching task with config:")
