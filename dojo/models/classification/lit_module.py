@@ -1,5 +1,7 @@
 import os
 import shutil
+import subprocess
+import tempfile
 from typing import Optional
 
 import lightning as L
@@ -8,6 +10,7 @@ import onnxruntime
 import torch
 from torcheval.metrics import Mean, MulticlassAccuracy
 
+import wandb
 from dojo.utils import get_exp_dir
 
 from .networks import ClassificationModel, ExportWrapper
@@ -19,6 +22,7 @@ class ClassificationLitModule(L.LightningModule):
         num_classes: int,
         pretrained_model_name_or_path: str = "openai/clip-vit-base-patch32",
         lr: float = 1e-5,
+        s3_folder: str = "s3://ai-data-log/dojo-testing",
     ):
         super().__init__()
         lr = float(lr)
@@ -137,7 +141,9 @@ class ClassificationLitModule(L.LightningModule):
     def _softmax_argmax(self, logits):
         return torch.argmax(torch.softmax(logits, dim=1), dim=1)
 
-    def to_torchscript(self, file_path: Optional[str] = None):
+    def to_torchscript(self, resume_ckpt_fpath: str):
+        traced_save_fpath = resume_ckpt_fpath.replace(".ckpt", ".pt")
+
         export_wrapper = ExportWrapper(self.model)
         example_inputs = torch.rand(32, 224, 224, 3, dtype=torch.float32, device=self.device)
         example_inputs = (example_inputs * 255).to(torch.uint8)
@@ -155,12 +161,14 @@ class ClassificationLitModule(L.LightningModule):
         print("Output after trace", traced_outputs.shape, traced_outputs.dtype)
         print(f"{traced_outputs = }")
 
-        if file_path is not None:
-            traced_module.save(file_path)
+        if traced_save_fpath is not None:
+            traced_module.save(traced_save_fpath)
 
         return traced_module
 
-    def to_onnx(self, file_path: Optional[str] = None):
+    def to_onnx(self, logger, resume_ckpt_fpath: str):
+        traced_save_fpath = resume_ckpt_fpath.replace(".ckpt", ".onnx")
+
         export_wrapper = ExportWrapper(self.model)
 
         example_inputs = torch.rand(32, 224, 224, 3, dtype=torch.float32, device=self.device)
@@ -171,9 +179,9 @@ class ClassificationLitModule(L.LightningModule):
         print("Output before trace", untraced_output.shape, untraced_output.dtype)
         print(f"{untraced_output = }")
 
-        torch.onnx.export(export_wrapper, example_inputs, file_path, export_params=True)
+        torch.onnx.export(export_wrapper, example_inputs, traced_save_fpath, export_params=True)
 
-        model = onnxruntime.InferenceSession(file_path, providers=["CUDAExecutionProvider"])
+        model = onnxruntime.InferenceSession(traced_save_fpath, providers=["CUDAExecutionProvider"])
 
         input_name = model.get_inputs()[0].name
         traced_output = model.run(None, {input_name: example_inputs.to("cpu").numpy()})
@@ -188,3 +196,25 @@ class ClassificationLitModule(L.LightningModule):
             atol=1e-03,
             err_msg="The outputs do not match!",
         )
+
+        self.log_version(logger, resume_ckpt_fpath)
+
+    def log_version(self, logger: L.pytorch.loggers.WandbLogger, ckpt_fpath: str):
+        artifact_type = "model"
+
+        with tempfile.NamedTemporaryFile() as tmp:
+            torch.save(self.model.state_dict(), tmp.name)
+
+            # push to s3
+            s3_uri = f"{self.hparams['s3_folder']}/{logger.experiment.project}/{artifact_type}/{logger.experiment.name}-{logger.experiment.id}/{os.path.basename(ckpt_fpath)}"
+            aws_cli_command = f"aws s3 cp {tmp.name} {s3_uri}"
+            subprocess.run(aws_cli_command, shell=True, capture_output=False, text=True)
+
+        # log to wandb as reference artifact
+        # todo: add metadata to artifact
+        artifact = wandb.Artifact(f"exported-model", type=artifact_type)
+
+        # todo: using checksum=True takes too much time. can i use s3 bucket's metadata instead? (e.g. last modified date, size, etc.)
+        artifact.add_reference(s3_uri, checksum=False)
+
+        logger.experiment.log_artifact(artifact)
