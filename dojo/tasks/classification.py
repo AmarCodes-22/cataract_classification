@@ -9,9 +9,6 @@ from dojo.utils import get_exp_dir, initialize_wandb_logger
 
 
 def initialize_modules(cfg):
-    if cfg.resume:
-        assert cfg.resume_epoch is not None, "If resuming, you must provide the epoch to resume from"
-
     logger = initialize_wandb_logger(**cfg.logger)
 
     exp_dir = get_exp_dir(logger)

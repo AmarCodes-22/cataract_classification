@@ -10,4 +10,4 @@ from .tasks import (
     test_classification,
     train_classification,
 )
-from .utils import initialize_wandb_logger
+from .utils import assert_valid_config
