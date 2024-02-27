@@ -13,7 +13,7 @@ dataset:
   test_dataset_dir: /home/ubuntu/members/amar/dojo/test/cifar10-images/test
   predict_dataset_dir: /home/ubuntu/members/amar/dojo/test/cifar10-images/test
 logger:
-  project: test-dojo-v2
+  project: common-classification-test-dojo-v2
   id: null
   resume: ${resume}
 callbacks:
