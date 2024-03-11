@@ -104,6 +104,7 @@ class ClassificationLitModule(L.LightningModule):
 
         return {"loss": loss}
 
+    # todo: make this a callback
     def on_predict_start(self):
         self.prediction_output_dir = os.path.join(get_exp_dir(self.trainer.logger), "predict")
 

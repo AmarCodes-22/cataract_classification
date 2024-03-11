@@ -1,3 +1,4 @@
 from .checks import assert_valid_config
-from .logging import initialize_wandb_logger
+from .config import get_resume_ckpt_fpath
+from .logging import initialize_wandb_logger, use_artifact
 from .runs import get_exp_dir
