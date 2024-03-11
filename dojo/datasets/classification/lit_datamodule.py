@@ -23,6 +23,7 @@ class ClassificationLitDataModule(L.LightningDataModule):
         batch_size: int = 16,
         num_workers: int = 16,
         s3_folder: str = "s3://ai-data-log/dojo-testing",
+        log_dataset: bool = False,
     ) -> None:
         super().__init__()
 
@@ -39,7 +40,9 @@ class ClassificationLitDataModule(L.LightningDataModule):
             assert 0 < val_ratio < 1, f"{val_ratio = }"
 
             dataset = load_dataset("imagefolder", data_dir=train_dir, split="train")
-            dataset_split = dataset.train_test_split(test_size=val_ratio, shuffle=True, seed=42)
+            dataset_split = dataset.train_test_split(
+                test_size=val_ratio, shuffle=True, seed=42, stratify_by_column="label"
+            )
             self.train_dataset = ClassificationDataset(
                 hf_dataset=dataset_split["train"], image_size=self.hparams["image_size"], cache=self.hparams["cache"]
             )
@@ -47,11 +50,12 @@ class ClassificationLitDataModule(L.LightningDataModule):
                 hf_dataset=dataset_split["test"], image_size=self.hparams["image_size"], cache=self.hparams["cache"]
             )
             self.dataset_idx_to_class = self.train_dataset.idx_to_class
-            self.log_version(
-                self.trainer.logger,
-                local_dataset_dir=train_dir,
-                stage=stage,
-            )
+            if self.hparams["log_dataset"]:
+                self.log_version(
+                    self.trainer.logger,
+                    local_dataset_dir=train_dir,
+                    stage=stage,
+                )
 
         elif stage == "test":
             test_dir = self.hparams["test_dataset_dir"]
@@ -60,11 +64,12 @@ class ClassificationLitDataModule(L.LightningDataModule):
             self.test_dataset = ClassificationDataset(
                 dataset_dir=test_dir, image_size=self.hparams["image_size"], cache=self.hparams["cache"]
             )
-            self.log_version(
-                self.trainer.logger,
-                local_dataset_dir=test_dir,
-                stage=stage,
-            )
+            if self.hparams["log_dataset"]:
+                self.log_version(
+                    self.trainer.logger,
+                    local_dataset_dir=test_dir,
+                    stage=stage,
+                )
         elif stage == "predict":
             self.predict_dataset = ClassificationDataset(
                 dataset_dir=self.hparams["predict_dataset_dir"],

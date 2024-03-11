@@ -41,7 +41,7 @@ def load_checkpoint_callbacks(
         callbacks.append(
             ModelCheckpoint(
                 save_top_k=-1,
-                every_n_epochs=every_n_epochs,
+                every_n_epochs=save_every_n_epochs,
                 filename="epoch_{epoch}",
                 dirpath=checkpoints_dir,
                 auto_insert_metric_name=False,
