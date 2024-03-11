@@ -1,7 +1,6 @@
 project_type: classification
 task: train
-resume: False
-resume_epoch: best
+resume_ckpt_fpath: null
 trainer:
   precision: 16-mixed
   max_epochs: 1
@@ -9,9 +8,7 @@ model:
   num_classes: 10
 dataset:
   train_dataset_dir: /home/ubuntu/members/amar/dojo/test/cifar10-images/train2
-  val_ratio: 0.2
-  test_dataset_dir: /home/ubuntu/members/amar/dojo/test/cifar10-images/test
-  predict_dataset_dir: /home/ubuntu/members/amar/dojo/test/cifar10-images/test
+  log_dataset: True
 logger:
   project: common-classification-test-dojo-v2
   id: null

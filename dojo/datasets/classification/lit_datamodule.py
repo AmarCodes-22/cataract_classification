@@ -112,16 +112,10 @@ class ClassificationLitDataModule(L.LightningDataModule):
     def log_version(self, logger: L.pytorch.loggers.WandbLogger, local_dataset_dir: str, stage: Literal["fit", "test"]):
         artifact_type = "dataset"
 
-        # push dataset to s3
-        s3_uri = f"{self.hparams['s3_folder']}/{logger.experiment.project}/{artifact_type}/{stage}"
-        aws_cli_command = f"aws s3 sync {local_dataset_dir} {s3_uri}"
-        subprocess.run(aws_cli_command, shell=True, capture_output=False, text=True)
-
-        # log to wandb as reference artifact
         # todo: add metadata to artifact
         artifact = wandb.Artifact(f"dataset-{stage}", type=artifact_type)
 
         # todo: using checksum=True takes too much time. can i use s3 bucket's metadata instead? (e.g. last modified date, size, etc.)
-        artifact.add_reference(s3_uri, checksum=False)
+        artifact.add_reference(f"file://{local_dataset_dir}", checksum=True)
 
         logger.use_artifact(artifact)
