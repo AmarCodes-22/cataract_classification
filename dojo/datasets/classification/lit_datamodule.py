@@ -32,6 +32,7 @@ class ClassificationLitDataModule(L.LightningDataModule):
         print(f"Initialized {self.__class__.__name__} with the following hyperparameters:")
         print(self.hparams, end="\n\n")
 
+    # todo: log dataset info to wandb as a file (self.train_dataset.dataset.info)
     def setup(self, stage: str):
         if stage == "fit":
             train_dir = self.hparams["train_dataset_dir"]

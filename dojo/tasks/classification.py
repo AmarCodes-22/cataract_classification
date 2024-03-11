@@ -6,28 +6,22 @@ import wandb
 from dojo.callbacks import load_checkpoint_callbacks
 from dojo.datasets import initialize_classification_lit_datamodule
 from dojo.models import initialize_classification_lit_module
-from dojo.utils import get_exp_dir, initialize_wandb_logger
+from dojo.utils import (
+    get_exp_dir,
+    get_resume_ckpt_fpath,
+    initialize_wandb_logger,
+    use_artifact,
+)
 
 
 def initialize_modules(cfg):
     logger = initialize_wandb_logger(**cfg.logger)
 
     exp_dir = get_exp_dir(logger)
-    if cfg.resume or cfg.resume_ckpt_fpath is not None:
-        if cfg.resume_ckpt_fpath is not None:
-            resume_ckpt_fpath = str(cfg.resume_ckpt_fpath)
-        else:
-            resume_ckpt_fpath = os.path.join(exp_dir, "fit", f"epoch_{cfg.resume_epoch}.ckpt") if cfg.resume else None
-        resume_ckpt_fpath = os.path.abspath(resume_ckpt_fpath)
-    else:
-        resume_ckpt_fpath = None
+    resume_ckpt_fpath = get_resume_ckpt_fpath(cfg, exp_dir)
 
     if resume_ckpt_fpath is not None:
-        artifact = wandb.Artifact(f"model-resume", type="model")
-
-        artifact.add_reference(f"file://{resume_ckpt_fpath}", checksum=True)
-
-        logger.use_artifact(artifact)
+        use_artifact("model-resume", "model", f"file://{resume_ckpt_fpath}", True, logger)
 
     model = initialize_classification_lit_module(resume_ckpt_fpath, **cfg.model)
     dataset = initialize_classification_lit_datamodule(**cfg.dataset)
