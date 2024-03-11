@@ -11,7 +11,7 @@ import torch
 from torcheval.metrics import Mean, MulticlassAccuracy
 
 import wandb
-from dojo.utils import get_exp_dir
+from dojo.utils import get_exp_dir, log_artifact
 
 from .networks import ClassificationModel, ExportWrapper
 
@@ -22,7 +22,7 @@ class ClassificationLitModule(L.LightningModule):
         num_classes: int,
         pretrained_model_name_or_path: str = "openai/clip-vit-base-patch32",
         lr: float = 1e-5,
-        s3_folder: str = "s3://ai-data-log/dojo-testing",
+        server_folder: str = "/mnt/data-anno-1/dojo/models",
     ):
         super().__init__()
         lr = float(lr)
@@ -198,24 +198,22 @@ class ClassificationLitModule(L.LightningModule):
             err_msg="The outputs do not match!",
         )
 
-        self.log_version(logger, resume_ckpt_fpath)
+        self.log_version(logger, resume_ckpt_fpath, traced_save_fpath)
 
-    def log_version(self, logger: L.pytorch.loggers.WandbLogger, ckpt_fpath: str):
-        artifact_type = "model"
-
+    def log_version(self, logger: L.pytorch.loggers.WandbLogger, resume_ckpt_fpath: str, traced_ckpt_fpath: str):
         with tempfile.NamedTemporaryFile() as tmp:
             torch.save(self.model.state_dict(), tmp.name)
 
-            # push to s3
-            s3_uri = f"{self.hparams['s3_folder']}/{logger.experiment.project}/{artifact_type}/{logger.experiment.name}-{logger.experiment.id}/{os.path.basename(ckpt_fpath)}"
-            aws_cli_command = f"aws s3 cp {tmp.name} {s3_uri}"
-            subprocess.run(aws_cli_command, shell=True, capture_output=False, text=True)
+            # move to server
+            server_path = f"{self.hparams['server_folder']}/{logger.experiment.project}/{logger.experiment.name}-{logger.experiment.id}/{os.path.basename(resume_ckpt_fpath)}"
+            command = f"rsync -ahvz --rsync-path='mkdir -p {os.path.dirname(server_path)} && rsync' {tmp.name} ubuntu@192.168.2.228:{server_path}"
+            subprocess.run(command, shell=True, capture_output=False, text=True)
 
-        # log to wandb as reference artifact
-        # todo: add metadata to artifact
-        artifact = wandb.Artifact(f"exported-model", type=artifact_type)
-
-        # todo: using checksum=True takes too much time. can i use s3 bucket's metadata instead? (e.g. last modified date, size, etc.)
-        artifact.add_reference(s3_uri, checksum=False)
-
-        logger.experiment.log_artifact(artifact)
+        log_artifact(
+            f"model-resume",
+            "model",
+            f"file://{os.path.abspath(traced_ckpt_fpath)}",
+            use_checksum=True,
+            logger=logger,
+            metadata_dict={"local_server_fpath": server_path},
+        )
