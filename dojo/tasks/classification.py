@@ -13,8 +13,8 @@ def initialize_modules(cfg):
     logger = initialize_wandb_logger(**cfg.logger)
 
     exp_dir = get_exp_dir(logger)
-    if cfg.resume:
-        if cfg.resume_ckpt_fpath:
+    if cfg.resume or cfg.resume_ckpt_fpath is not None:
+        if cfg.resume_ckpt_fpath is not None:
             resume_ckpt_fpath = str(cfg.resume_ckpt_fpath)
         else:
             resume_ckpt_fpath = os.path.join(exp_dir, "fit", f"epoch_{cfg.resume_epoch}.ckpt") if cfg.resume else None
