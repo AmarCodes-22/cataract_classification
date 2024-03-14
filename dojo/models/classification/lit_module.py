@@ -22,7 +22,7 @@ class ClassificationLitModule(L.LightningModule):
         num_classes: int,
         pretrained_model_name_or_path: str = "openai/clip-vit-base-patch32",
         lr: float = 1e-5,
-        server_folder: str = "/mnt/data-anno-1/dojo/models",
+        server_path: str = "ubuntu@192.168.2.228:/mnt/data-anno-1/dojo/models",
     ):
         super().__init__()
         lr = float(lr)
@@ -205,12 +205,12 @@ class ClassificationLitModule(L.LightningModule):
             torch.save(self.model.state_dict(), tmp.name)
 
             # move to server
-            server_path = f"{self.hparams['server_folder']}/{logger.experiment.project}/{logger.experiment.name}-{logger.experiment.id}/{os.path.basename(resume_ckpt_fpath)}"
-            command = f"rsync -ahvz --rsync-path='mkdir -p {os.path.dirname(server_path)} && rsync' {tmp.name} ubuntu@192.168.2.228:{server_path}"
+            server_path = f"{self.hparams['server_path']}/{logger.experiment.project}/{logger.experiment.name}-{logger.experiment.id}/{os.path.basename(resume_ckpt_fpath)}"
+            command = f"rsync -ahvz --rsync-path='mkdir -p {os.path.dirname(server_path.split(':')[1])} && rsync' {tmp.name} {server_path}"
             subprocess.run(command, shell=True, capture_output=False, text=True)
 
         log_artifact(
-            f"model-resume",
+            "model-export",
             "model",
             f"file://{os.path.abspath(traced_ckpt_fpath)}",
             use_checksum=True,

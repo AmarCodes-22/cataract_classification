@@ -7,6 +7,7 @@ from datasets import load_dataset
 from torch.utils.data import DataLoader
 
 import wandb
+from dojo.utils import use_artifact
 
 from .main import ClassificationDataset
 
@@ -111,12 +112,10 @@ class ClassificationLitDataModule(L.LightningDataModule):
 
     # todo: version logging only works when checksum=True
     def log_version(self, logger: L.pytorch.loggers.WandbLogger, local_dataset_dir: str, stage: Literal["fit", "test"]):
-        artifact_type = "dataset"
-
-        # todo: add metadata to artifact
-        artifact = wandb.Artifact(f"dataset-{stage}", type=artifact_type)
-
-        # todo: using checksum=True takes too much time. can i use s3 bucket's metadata instead? (e.g. last modified date, size, etc.)
-        artifact.add_reference(f"file://{local_dataset_dir}", checksum=True)
-
-        logger.use_artifact(artifact)
+        use_artifact(
+            f"dataset-{stage}",
+            "dataset",
+            f"file://{local_dataset_dir}",
+            True,
+            logger,
+        )
