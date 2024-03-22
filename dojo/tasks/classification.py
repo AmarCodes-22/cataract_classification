@@ -21,7 +21,7 @@ def initialize_modules(cfg):
     resume_ckpt_fpath = get_resume_ckpt_fpath(cfg, exp_dir)
 
     if resume_ckpt_fpath is not None:
-        use_artifact("model-resume", "model", f"file://{resume_ckpt_fpath}", True, logger)
+        use_artifact("model-resume", "model", f"file://{resume_ckpt_fpath}", True, logger, max_objects=1)
 
     model = initialize_classification_lit_module(resume_ckpt_fpath, **cfg.model)
     dataset = initialize_classification_lit_datamodule(**cfg.dataset)

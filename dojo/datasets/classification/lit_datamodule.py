@@ -1,3 +1,5 @@
+import multiprocessing
+from dojo.utils import split_hf_dataset
 import os
 import subprocess
 from typing import Literal, Optional
@@ -22,7 +24,7 @@ class ClassificationLitDataModule(L.LightningDataModule):
         cache: bool = False,
         image_size: int = 224,
         batch_size: int = 16,
-        num_workers: int = 16,
+        num_workers: int = multiprocessing.cpu_count(),
         s3_folder: str = "s3://ai-data-log/dojo-testing",
         log_dataset: bool = False,
     ) -> None:
@@ -42,9 +44,7 @@ class ClassificationLitDataModule(L.LightningDataModule):
             assert 0 < val_ratio < 1, f"{val_ratio = }"
 
             dataset = load_dataset("imagefolder", data_dir=train_dir, split="train")
-            dataset_split = dataset.train_test_split(
-                test_size=val_ratio, shuffle=True, seed=42, stratify_by_column="label"
-            )
+            dataset_split = split_hf_dataset(dataset, test_size=val_ratio, shuffle=True, seed=42, stratify_by_column="label")
             self.train_dataset = ClassificationDataset(
                 hf_dataset=dataset_split["train"], image_size=self.hparams["image_size"], cache=self.hparams["cache"]
             )
@@ -57,6 +57,7 @@ class ClassificationLitDataModule(L.LightningDataModule):
                     self.trainer.logger,
                     local_dataset_dir=train_dir,
                     stage=stage,
+                    max_objects=len(self.train_dataset) + len(self.val_dataset),
                 )
 
         elif stage == "test":
@@ -71,6 +72,7 @@ class ClassificationLitDataModule(L.LightningDataModule):
                     self.trainer.logger,
                     local_dataset_dir=test_dir,
                     stage=stage,
+                    max_objects=len(self.test_dataset),
                 )
         elif stage == "predict":
             self.predict_dataset = ClassificationDataset(
@@ -111,11 +113,12 @@ class ClassificationLitDataModule(L.LightningDataModule):
         self.dataset_idx_to_class = state_dict["dataset_idx_to_class"]
 
     # todo: version logging only works when checksum=True
-    def log_version(self, logger: L.pytorch.loggers.WandbLogger, local_dataset_dir: str, stage: Literal["fit", "test"]):
+    def log_version(self, logger: L.pytorch.loggers.WandbLogger, local_dataset_dir: str, stage: Literal["fit", "test"], max_objects: int):
         use_artifact(
             f"dataset-{stage}",
             "dataset",
             f"file://{local_dataset_dir}",
             True,
             logger,
+            max_objects=max_objects,
         )

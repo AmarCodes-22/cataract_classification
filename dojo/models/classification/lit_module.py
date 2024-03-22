@@ -1,4 +1,8 @@
 import os
+import matplotlib.pyplot as plt
+from tempfile import NamedTemporaryFile
+from PIL import Image
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import shutil
 import subprocess
 import tempfile
@@ -88,6 +92,10 @@ class ClassificationLitModule(L.LightningModule):
         self.log("global_step", self.trainer.global_step)
 
         return {"loss": loss}
+    
+    def on_test_start(self):
+        self.test_preds = list()
+        self.test_labels = list()
 
     def test_step(self, batch, batch_idx):
         images, labels = batch["image"], batch["label"]
@@ -96,13 +104,34 @@ class ClassificationLitModule(L.LightningModule):
         loss = self.loss_fn(logits, labels)
 
         self.test_loss.update(loss)
-        self.test_accuracy.update(self._softmax_argmax(logits), labels)
+        preds = self._softmax_argmax(logits)
+
+        self.test_accuracy.update(preds, labels)
 
         self.log("test/acc", self.test_accuracy.compute(), on_step=False, on_epoch=True)
         self.log("test/loss", self.test_loss.compute(), on_step=False, on_epoch=True)
         self.log("global_step", self.trainer.global_step)
 
-        return {"loss": loss}
+        return {"loss": loss, "preds": preds, "labels": labels}
+    
+    def on_test_batch_end(self, output, batch, batch_idx, dataloader_idx=0):
+        self.test_preds.extend(output["preds"].cpu().numpy())
+        self.test_labels.extend(output["labels"].cpu().numpy())
+    
+    def on_test_end(self):
+        conf_mat = confusion_matrix(self.test_labels, self.test_preds)
+        conf_mat_img = ConfusionMatrixDisplay(conf_mat, display_labels=self.trainer.datamodule.dataset_idx_to_class.values())
+        conf_mat_img = self._confusion_matrix_as_pil(conf_mat_img)
+        wandb.log({"Confusion Matrix": wandb.Image(conf_mat_img)})
+        wandb.save("confusion_matrix.jpg")
+
+    def _confusion_matrix_as_pil(self, conf_mat_img):
+        with NamedTemporaryFile(suffix='.jpg') as tmp:
+            _, ax = plt.subplots()
+            conf_mat_img.plot(ax=ax)
+            plt.savefig(tmp.name)
+            img = Image.open(tmp.name)
+        return img
 
     # todo: make this a callback
     def on_predict_start(self):
