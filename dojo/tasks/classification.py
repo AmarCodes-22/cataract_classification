@@ -3,7 +3,11 @@ import os
 from lightning.pytorch import Trainer
 
 import wandb
-from dojo.callbacks import load_checkpoint_callbacks
+from dojo.callbacks import (
+    GenerateTestReportCallback,
+    key_to_callback_class,
+    load_checkpoint_callbacks,
+)
 from dojo.datasets import initialize_classification_lit_datamodule
 from dojo.models import initialize_classification_lit_module
 from dojo.utils import (
@@ -27,6 +31,10 @@ def initialize_modules(cfg):
     dataset = initialize_classification_lit_datamodule(**cfg.dataset)
 
     callbacks = load_checkpoint_callbacks(checkpoints_dir=os.path.join(exp_dir, "fit"), **cfg.callbacks.checkpoints)
+
+    for key in cfg.callbacks.other_callbacks:
+        callback_class = key_to_callback_class[key]
+        callbacks.append(callback_class())
 
     trainer = Trainer(logger=logger, callbacks=callbacks, **cfg.trainer)
 

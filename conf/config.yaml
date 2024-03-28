@@ -26,3 +26,6 @@ callbacks:
     save_best: True
     save_latest: True
     save_every_n_epochs: 0
+  other_callbacks: [
+    'classification-generate_test_report'
+  ]

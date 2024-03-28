@@ -1,5 +1,7 @@
 from typing import List
 
+from dojo.callbacks import key_to_callback_class
+
 VALID_VERTICAL_NAMES = ["auto", "ecom", "food", "common"]
 VALID_PROJECT_TYPES = ["classification", "detection", "segmentation", "generative"]
 
@@ -22,3 +24,8 @@ def assert_valid_config(cfg):
     assert (
         project_type in VALID_PROJECT_TYPES
     ), f"Invalid project type: {project_type}. Must be one of {VALID_PROJECT_TYPES}"
+
+    for key in cfg.callbacks.other_callbacks:
+        assert (
+            key in key_to_callback_class
+        ), f"Invalid callback key: {key}. Must be one of {tuple(key_to_callback_class.keys())}"

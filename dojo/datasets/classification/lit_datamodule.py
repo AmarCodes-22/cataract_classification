@@ -1,5 +1,4 @@
 import multiprocessing
-from dojo.utils import split_hf_dataset
 import os
 import subprocess
 from typing import Literal, Optional
@@ -9,7 +8,7 @@ from datasets import load_dataset
 from torch.utils.data import DataLoader
 
 import wandb
-from dojo.utils import use_artifact
+from dojo.utils import split_hf_dataset, use_artifact
 
 from .main import ClassificationDataset
 
@@ -44,7 +43,9 @@ class ClassificationLitDataModule(L.LightningDataModule):
             assert 0 < val_ratio < 1, f"{val_ratio = }"
 
             dataset = load_dataset("imagefolder", data_dir=train_dir, split="train")
-            dataset_split = split_hf_dataset(dataset, test_size=val_ratio, shuffle=True, seed=42, stratify_by_column="label")
+            dataset_split = split_hf_dataset(
+                dataset, test_size=val_ratio, shuffle=True, seed=42, stratify_by_column="label"
+            )
             self.train_dataset = ClassificationDataset(
                 hf_dataset=dataset_split["train"], image_size=self.hparams["image_size"], cache=self.hparams["cache"]
             )
@@ -113,7 +114,13 @@ class ClassificationLitDataModule(L.LightningDataModule):
         self.dataset_idx_to_class = state_dict["dataset_idx_to_class"]
 
     # todo: version logging only works when checksum=True
-    def log_version(self, logger: L.pytorch.loggers.WandbLogger, local_dataset_dir: str, stage: Literal["fit", "test"], max_objects: int):
+    def log_version(
+        self,
+        logger: L.pytorch.loggers.WandbLogger,
+        local_dataset_dir: str,
+        stage: Literal["fit", "test"],
+        max_objects: int,
+    ):
         use_artifact(
             f"dataset-{stage}",
             "dataset",
