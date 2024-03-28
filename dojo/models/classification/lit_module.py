@@ -201,7 +201,7 @@ class ClassificationLitModule(L.LightningModule):
 
         export_wrapper = ExportWrapper(self.model)
 
-        example_inputs = torch.rand(32, 224, 224, 3, dtype=torch.float32, device=self.device)
+        example_inputs = torch.rand(1, 224, 224, 3, dtype=torch.float32, device=self.device)
         example_inputs = (example_inputs * 255).to(torch.uint8)
         export_wrapper.eval()
 
@@ -209,7 +209,15 @@ class ClassificationLitModule(L.LightningModule):
         print("Output before trace", untraced_output.shape, untraced_output.dtype)
         print(f"{untraced_output = }")
 
-        torch.onnx.export(export_wrapper, example_inputs, traced_save_fpath, export_params=True)
+        torch.onnx.export(
+            export_wrapper,
+            example_inputs,
+            traced_save_fpath,
+            export_params=True,
+            input_names=["input"],
+            output_names=["output"],
+            dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},
+        )
 
         model = onnxruntime.InferenceSession(traced_save_fpath, providers=["CUDAExecutionProvider"])
 
