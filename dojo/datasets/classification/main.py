@@ -9,6 +9,8 @@ from datasets import DatasetDict, load_dataset
 from torch.utils.data import Dataset as TorchDataset
 from tqdm import tqdm
 
+from dojo.utils import load_transform
+
 
 class ClassificationDataset(TorchDataset):
     def __init__(
@@ -17,7 +19,7 @@ class ClassificationDataset(TorchDataset):
         hf_dataset: Optional[DatasetDict] = None,
         image_size: int = 224,
         cache: bool = False,
-        transform: Callable | None = None,
+        transform: Union[Callable, str] | None = None,
         drop_labels: bool = False,
     ) -> None:
         super().__init__()
@@ -34,8 +36,14 @@ class ClassificationDataset(TorchDataset):
         if not drop_labels:
             self.idx_to_class = {i: name for i, name in enumerate(self.dataset.features["label"].names)}
 
-        util_transform = A.Compose([A.Resize(height=image_size, width=image_size), A.ToFloat(), ToTensorV2()])
+        util_transform = A.Compose([A.Resize(height=image_size, width=image_size), A.ToFloat()])
+
+        if isinstance(transform, str):
+            assert os.path.exists(transform), f"{transform = }"
+            transform = load_transform(transform)
+
         self.transform = transform if transform is not None else util_transform
+        self.transform = A.Compose([self.transform, ToTensorV2()])
 
         self.cache = cache
         self.samples: Union[DatasetDict, dict] = dict()

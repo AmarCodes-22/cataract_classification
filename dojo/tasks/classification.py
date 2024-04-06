@@ -1,5 +1,6 @@
 import os
 
+import torch
 from lightning.pytorch import Trainer
 
 import wandb
@@ -18,6 +19,11 @@ from dojo.utils import (
 )
 
 
+# todo: move this to utils
+def get_resume_ckpt_epoch(resume_ckpt_fpath):
+    return torch.load(resume_ckpt_fpath)["epoch"]
+
+
 def initialize_modules(cfg):
     logger = initialize_wandb_logger(**cfg.logger)
 
@@ -26,6 +32,11 @@ def initialize_modules(cfg):
 
     if resume_ckpt_fpath is not None:
         use_artifact("model-resume", "model", f"file://{resume_ckpt_fpath}", True, logger, max_objects=1)
+        resume_ckpt_epoch = get_resume_ckpt_epoch(resume_ckpt_fpath)
+        cfg.trainer.max_epochs += resume_ckpt_epoch
+        print(
+            f"Updating max_epochs to {cfg.trainer.max_epochs} to account for resumed checkpoint resumed from {resume_ckpt_epoch}."
+        )
 
     model = initialize_classification_lit_module(resume_ckpt_fpath, **cfg.model)
     dataset = initialize_classification_lit_datamodule(**cfg.dataset)
@@ -35,6 +46,7 @@ def initialize_modules(cfg):
     for key in cfg.callbacks.other_callbacks:
         callback_class = key_to_callback_class[key]
         callbacks.append(callback_class())
+    print("Initilized callbacks:", callbacks, end="\n\n")
 
     trainer = Trainer(logger=logger, callbacks=callbacks, **cfg.trainer)
 

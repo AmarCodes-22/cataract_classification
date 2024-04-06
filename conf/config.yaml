@@ -16,6 +16,7 @@ dataset:
   predict_dataset_dir: null
   batch_size: 16
   log_dataset: True
+  train_transform: conf/transform/default.yaml
 logger:
   project: common-classification-test-dojo-v2
   id: null

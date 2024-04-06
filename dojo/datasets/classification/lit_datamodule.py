@@ -1,7 +1,7 @@
 import multiprocessing
 import os
 import subprocess
-from typing import Literal, Optional
+from typing import Callable, Literal, Optional
 
 import lightning as L
 from datasets import load_dataset
@@ -20,6 +20,7 @@ class ClassificationLitDataModule(L.LightningDataModule):
         val_ratio: float = 0.1,
         test_dataset_dir: Optional[str] = None,
         predict_dataset_dir: Optional[str] = None,
+        train_transform: Optional[Callable] = None,
         cache: bool = False,
         image_size: int = 224,
         batch_size: int = 16,
@@ -47,12 +48,16 @@ class ClassificationLitDataModule(L.LightningDataModule):
                 dataset, test_size=val_ratio, shuffle=True, seed=42, stratify_by_column="label"
             )
             self.train_dataset = ClassificationDataset(
-                hf_dataset=dataset_split["train"], image_size=self.hparams["image_size"], cache=self.hparams["cache"]
+                hf_dataset=dataset_split["train"],
+                image_size=self.hparams["image_size"],
+                cache=self.hparams["cache"],
+                transform=self.hparams["train_transform"],
             )
             self.val_dataset = ClassificationDataset(
                 hf_dataset=dataset_split["test"], image_size=self.hparams["image_size"], cache=self.hparams["cache"]
             )
             self.dataset_idx_to_class = self.train_dataset.idx_to_class
+            self.num_classes = len(self.dataset_idx_to_class)
             if self.hparams["log_dataset"]:
                 self.log_version(
                     self.trainer.logger,

@@ -1,4 +1,4 @@
-from .callbacks import load_checkpoint_callbacks
+from .callbacks import key_to_callback_class, load_checkpoint_callbacks
 from .datasets import (
     ClassificationLitDataModule,
     initialize_classification_lit_datamodule,

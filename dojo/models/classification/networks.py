@@ -23,11 +23,12 @@ class LinearHead(nn.Module):
 class ClassificationModel(nn.Module):
     def __init__(self, pretrained_model_name_or_path: str = "openai/clip-vit-base-patch32", num_classes: int = 2):
         super().__init__()
+        self.num_classes = num_classes
 
         self.backbone = CLIPVisionModel.from_pretrained(pretrained_model_name_or_path)
         self.backbone_output_size = self.backbone.config.hidden_size
 
-        self.head = LinearHead(input_dim=self.backbone_output_size, output_dim=num_classes)
+        self.head = LinearHead(input_dim=self.backbone_output_size, output_dim=self.num_classes)
 
     def forward(self, x) -> ClassificationModelOutput:
         x = self.backbone(x).pooler_output

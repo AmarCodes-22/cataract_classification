@@ -1,0 +1,30 @@
+__version__: 1.4.0
+transform:
+  __class_fullname__: Compose
+  additional_targets: {}
+  bbox_params: null
+  is_check_shapes: true
+  keypoint_params: null
+  p: 1.0
+  transforms:
+  - __class_fullname__: LongestMaxSize
+    always_apply: false
+    interpolation: 1
+    max_size: 256
+    p: 1
+  - __class_fullname__: RandomResizedCrop
+    always_apply: false
+    height: 224
+    interpolation: 1
+    p: 1.0
+    ratio:
+    - 0.75
+    - 1.3333333333333333
+    scale:
+    - 0.8
+    - 1.0
+    width: 224
+  - __class_fullname__: ToFloat
+    always_apply: false
+    max_value: null
+    p: 1.0
