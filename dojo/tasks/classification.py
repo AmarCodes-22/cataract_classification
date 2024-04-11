@@ -1,9 +1,9 @@
 import os
 
 import torch
+import wandb
 from lightning.pytorch import Trainer
 
-import wandb
 from dojo.callbacks import (
     GenerateTestReportCallback,
     key_to_callback_class,

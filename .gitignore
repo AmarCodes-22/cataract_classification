@@ -162,5 +162,5 @@ cython_debug/
 /test/
 /outputs/
 /runs/
-/wandb/
+/wandb_logs/
 /data/

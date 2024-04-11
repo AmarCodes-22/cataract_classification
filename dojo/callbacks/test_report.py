@@ -3,12 +3,12 @@ from tempfile import NamedTemporaryFile
 
 import matplotlib.pyplot as plt
 import numpy as np
+import wandb
 from lightning.pytorch.callbacks import Callback
 from PIL import Image
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 from tqdm import tqdm
 
-import wandb
 from dojo.utils import get_exp_dir, image_tensor_to_pil
 
 

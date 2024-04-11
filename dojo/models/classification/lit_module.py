@@ -8,12 +8,15 @@ import lightning as L
 import numpy as np
 import onnxruntime
 import torch
+import wandb
 from torcheval.metrics import Mean, MulticlassAccuracy
 
-import wandb
-from dojo.utils import get_exp_dir, log_artifact
+from dojo.utils import get_exp_dir, log_artifact, s3_uri_to_path
 
 from .networks import ClassificationModel, ExportWrapper
+
+EXPORT_TRACED_MODELS_S3_DIRNAME = "models-export-traced"
+EXPORT_RAW_MODELS_S3_DIRNAME = "models-export-raw"
 
 
 class ClassificationLitModule(L.LightningModule):
@@ -22,7 +25,7 @@ class ClassificationLitModule(L.LightningModule):
         num_classes: int,
         pretrained_model_name_or_path: str = "openai/clip-vit-base-patch32",
         lr: float = 1e-5,
-        server_path: str = "ubuntu@192.168.2.228:/mnt/data-anno-1/dojo/models",
+        s3_folder_uri: str = "s3://ai-data-log/dojo-testing/",
     ):
         super().__init__()
         lr = float(lr)
@@ -211,19 +214,39 @@ class ClassificationLitModule(L.LightningModule):
         self.log_version(logger, resume_ckpt_fpath, traced_save_fpath)
 
     def log_version(self, logger: L.pytorch.loggers.WandbLogger, resume_ckpt_fpath: str, traced_ckpt_fpath: str):
+        # * Store raw model on s3
         with tempfile.NamedTemporaryFile() as tmp:
             torch.save(self.model.state_dict(), tmp.name)
 
-            # move to server
-            server_path = f"{self.hparams['server_path']}/{logger.experiment.project}/{logger.experiment.name}-{logger.experiment.id}/{os.path.basename(resume_ckpt_fpath)}"
-            command = f"rsync -ahvz --rsync-path='mkdir -p {os.path.dirname(server_path.split(':')[1])} && rsync' {tmp.name} {server_path}"
+            # move to s3
+            s3_path = f"{self.hparams['s3_folder_uri'].strip('/')}/{EXPORT_RAW_MODELS_S3_DIRNAME}/{logger.experiment.project}/{logger.experiment.name}-{logger.experiment.id}/{os.path.basename(resume_ckpt_fpath)}"
+            command = f"aws s3 cp {tmp.name} {s3_path}"
             subprocess.run(command, shell=True, capture_output=False, text=True)
 
         log_artifact(
-            "model-export",
+            EXPORT_RAW_MODELS_S3_DIRNAME,
             "model",
-            f"file://{os.path.abspath(traced_ckpt_fpath)}",
+            f"s3://{s3_uri_to_path(s3_path)}",
             use_checksum=True,
             logger=logger,
-            metadata_dict={"local_server_fpath": server_path},
+            metadata_dict={
+                "s3_path": s3_path,
+            },
+        )
+
+        # * Store traced model on s3
+        assert os.path.exists(traced_ckpt_fpath), f"{traced_ckpt_fpath} does not exist"
+        s3_path = f"{self.hparams['s3_folder_uri'].strip('/')}/{EXPORT_TRACED_MODELS_S3_DIRNAME}/{logger.experiment.project}/{logger.experiment.name}-{logger.experiment.id}/{os.path.basename(resume_ckpt_fpath)}"
+        command = f"aws s3 cp {traced_ckpt_fpath} {s3_path}"
+        subprocess.run(command, shell=True, capture_output=False, text=True)
+
+        log_artifact(
+            EXPORT_TRACED_MODELS_S3_DIRNAME,
+            "model",
+            f"s3://{s3_uri_to_path(s3_path)}",
+            use_checksum=True,
+            logger=logger,
+            metadata_dict={
+                "s3_path": s3_path,
+            },
         )
