@@ -8,7 +8,7 @@ preprocess:
   longest_max_size: null
   smallest_max_size: 224
   dataset_dir: '/home/ubuntu/members/amar/projects/auto-classification-interior_subroi/data/v1'
-  output_dir: ${preprocess.dataset_dir}-preprocessed-v2
+  output_dir: ${preprocess.dataset_dir}-preprocessed
 trainer:
   precision: 16-mixed
   max_epochs: 10
@@ -27,6 +27,7 @@ logger:
   project: common-classification-test-dojo-v2
   id: null
   resume: ${resume}
+  job_type: ${task}
 callbacks:
   checkpoints:
     monitor_metric: val/acc
@@ -34,5 +35,6 @@ callbacks:
     save_latest: True
     save_every_n_epochs: 0
   other_callbacks: [
-    'classification-generate_test_report'
+    'classification-generate_test_report',
+    'classification-validate_architecture'
   ]

@@ -1,5 +1,4 @@
 import os
-from omegaconf import OmegaConf
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -7,6 +6,7 @@ import torch
 from lightning import LightningDataModule, LightningModule, Trainer
 from lightning.pytorch import Trainer
 from lightning.pytorch.callbacks import Callback
+from omegaconf import OmegaConf
 
 import wandb
 from dojo.callbacks import (
@@ -24,7 +24,8 @@ from dojo.utils import (
     get_exp_dir,
     get_resume_ckpt_fpath,
     initialize_wandb_logger,
-    use_artifact, log_artifact
+    log_artifact,
+    use_artifact,
 )
 
 
@@ -135,17 +136,17 @@ def preprocess(cfg):
     modules = initialize_modules(cfg, load_model=False, load_dataset=False, load_preprocessor=True)
     assert modules.preprocessor is not None, "Preprocessor must be loaded for preprocessing."
 
+    modules.preprocessor.process_dataset()
+    metadata_dict = OmegaConf.to_container(cfg.preprocess, resolve=True)
+
     use_artifact(
         artifact_name="dataset-raw",
         artifact_type="dataset",
         artifact_reference=f"file://{modules.preprocessor.dataset_dir}",
         use_checksum=True,
         logger=modules.logger,
-        max_objects=len(modules.preprocessor.dataset)
+        max_objects=len(modules.preprocessor.dataset),
     )
-
-    modules.preprocessor.process_dataset()
-    metadata_dict = OmegaConf.to_container(cfg.preprocess, resolve=True)
 
     log_artifact(
         artifact_name="dataset-preprocessed",
@@ -154,5 +155,5 @@ def preprocess(cfg):
         use_checksum=True,
         logger=modules.logger,
         max_objects=len(modules.preprocessor.dataset),
-        metadata_dict=metadata_dict
+        metadata_dict=metadata_dict,
     )
