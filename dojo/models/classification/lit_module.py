@@ -8,9 +8,9 @@ import lightning as L
 import numpy as np
 import onnxruntime
 import torch
-import wandb
 from torcheval.metrics import Mean, MulticlassAccuracy
 
+import wandb
 from dojo.utils import get_exp_dir, log_artifact, s3_uri_to_path
 
 from .networks import ClassificationModel, ExportWrapper

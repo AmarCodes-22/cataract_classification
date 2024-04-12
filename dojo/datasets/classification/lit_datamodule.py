@@ -4,10 +4,10 @@ import subprocess
 from typing import Callable, Literal, Optional
 
 import lightning as L
-import wandb
 from datasets import load_dataset
 from torch.utils.data import DataLoader
 
+import wandb
 from dojo.utils import split_hf_dataset, use_artifact
 
 from .main import ClassificationDataset

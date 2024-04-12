@@ -6,6 +6,7 @@ from dojo import (
     export_classification,
     key_to_callback_class,
     predict_classification,
+    preprocess_classification,
     test_classification,
     train_classification,
 )
@@ -28,7 +29,8 @@ def launch_task(cfg: DictConfig) -> None:
             predict_classification(cfg)
         elif cfg.task == "export":
             export_classification(cfg)
-        pass
+        elif cfg.task == "preprocess":
+            preprocess_classification(cfg)
     else:
         pass
 

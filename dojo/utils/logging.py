@@ -1,13 +1,14 @@
 from typing import Optional
 
-import wandb
 from lightning.pytorch.loggers import WandbLogger
 
+import wandb
 
-def initialize_wandb_logger(project: str, id: str, resume: bool):
+
+def initialize_wandb_logger(project: str, id: str, resume: bool, job_type: str):
     print("Initializing Weights & Biases logger", end="\n\n")
 
-    return WandbLogger(project=project, id=id, resume=resume, dir="wandb_logs")
+    return WandbLogger(project=project, id=id, resume=resume, dir="wandb_logs", job_type=job_type)
 
 
 def use_artifact(
@@ -29,10 +30,11 @@ def log_artifact(
     artifact_reference: str,
     use_checksum: bool,
     logger: WandbLogger,
+    max_objects: int,
     metadata_dict: Optional[dict] = None,
 ):
     artifact = wandb.Artifact(artifact_name, type=artifact_type)
-    artifact.add_reference(artifact_reference, checksum=use_checksum)
+    artifact.add_reference(artifact_reference, checksum=use_checksum, max_objects=max_objects)
 
     if metadata_dict is not None:
         artifact.metadata.update(metadata_dict)
