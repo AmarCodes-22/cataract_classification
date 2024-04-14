@@ -15,7 +15,7 @@ from dojo import (
 # todo: assert project names follow a certain convention
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def launch_task(cfg: DictConfig) -> None:
-    print("Launching task with config:")
+    print("Launching with config:")
     print(OmegaConf.to_yaml(cfg), end="\n")
 
     assert_valid_config(cfg, list(key_to_callback_class.keys()))

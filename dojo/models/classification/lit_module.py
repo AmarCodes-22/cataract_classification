@@ -2,7 +2,6 @@ import os
 import shutil
 import subprocess
 import tempfile
-from typing import Optional
 
 import lightning as L
 import numpy as np
@@ -10,8 +9,15 @@ import onnxruntime
 import torch
 from torcheval.metrics import Mean, MulticlassAccuracy
 
-import wandb
-from dojo.utils import get_exp_dir, log_artifact, s3_uri_to_path
+from dojo.logging import (
+    MODEL_EXPORT_ARTIFACT_NAME,
+    MODEL_EXPORT_ARTIFACT_TYPE,
+    MODEL_RAW_ARTIFACT_TYPE,
+    get_details_from_model_path,
+    log_artifact,
+    use_artifact,
+)
+from dojo.utils import get_exp_dir, s3_uri_to_path
 
 from .networks import ClassificationModel, ExportWrapper
 
@@ -223,29 +229,29 @@ class ClassificationLitModule(L.LightningModule):
             command = f"aws s3 cp {tmp.name} {s3_path}"
             subprocess.run(command, shell=True, capture_output=False, text=True)
 
-        log_artifact(
-            EXPORT_RAW_MODELS_S3_DIRNAME,
-            "model",
-            f"s3://{s3_uri_to_path(s3_path)}",
-            use_checksum=True,
+        model_details = get_details_from_model_path(resume_ckpt_fpath, from_path=True)
+        use_artifact(
+            artifact_name=f"{model_details.artifact_name}:{model_details.artifact_version}",
+            artifact_type=MODEL_RAW_ARTIFACT_TYPE,
+            artifact_path=resume_ckpt_fpath,
+            use_checksum=False,
             logger=logger,
-            metadata_dict={
-                "s3_path": s3_path,
-            },
+            max_objects=1,
         )
 
         # * Store traced model on s3
         assert os.path.exists(traced_ckpt_fpath), f"{traced_ckpt_fpath} does not exist"
-        s3_path = f"{self.hparams['s3_folder_uri'].strip('/')}/{EXPORT_TRACED_MODELS_S3_DIRNAME}/{logger.experiment.project}/{logger.experiment.name}-{logger.experiment.id}/{os.path.basename(resume_ckpt_fpath)}"
+        s3_path = f"{self.hparams['s3_folder_uri'].strip('/')}/{EXPORT_TRACED_MODELS_S3_DIRNAME}/{logger.experiment.project}/{logger.experiment.name}-{logger.experiment.id}/{os.path.basename(traced_ckpt_fpath)}"
         command = f"aws s3 cp {traced_ckpt_fpath} {s3_path}"
         subprocess.run(command, shell=True, capture_output=False, text=True)
 
         log_artifact(
-            EXPORT_TRACED_MODELS_S3_DIRNAME,
-            "model",
-            f"s3://{s3_uri_to_path(s3_path)}",
-            use_checksum=True,
+            artifact_name=MODEL_EXPORT_ARTIFACT_NAME(logger),
+            artifact_type=MODEL_EXPORT_ARTIFACT_TYPE,
+            artifact_path=traced_ckpt_fpath,
+            use_checksum=False,
             logger=logger,
+            max_objects=1,
             metadata_dict={
                 "s3_path": s3_path,
             },

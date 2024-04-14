@@ -14,10 +14,11 @@ from dojo.utils import get_exp_dir, image_tensor_to_pil
 
 # todo: find the image size based on the number of classes and adjust the figure size accordingly
 class GenerateTestReportCallback(Callback):
-    def __init__(self):
+    def __init__(self, max_num_images_per_label_pred: int = 20):
         self.test_preds = list()
         self.test_labels = list()
         self.label_pred_to_image = dict()
+        self.max_num_images_per_label_pred = max_num_images_per_label_pred
 
         print("Initialized GenerateTestReportCallback")
 
@@ -28,12 +29,13 @@ class GenerateTestReportCallback(Callback):
         preds, labels = output["preds"].cpu().numpy(), output["labels"].cpu().numpy()
         mismatch_indices = np.where(np.not_equal(preds, labels))[0]
         for index in mismatch_indices:
-            image_tensor = batch["image"][index]
+            image_tensor = batch["image"][index].cpu()
             label = labels[index]
             prediction = preds[index]
             if (label, prediction) not in self.label_pred_to_image:
                 self.label_pred_to_image[(label, prediction)] = []
-            self.label_pred_to_image[(label, prediction)].append(image_tensor)
+            if len(self.label_pred_to_image[(label, prediction)]) < self.max_num_images_per_label_pred:
+                self.label_pred_to_image[(label, prediction)].append(image_tensor)
 
     def on_test_end(self, trainer, pl_module):
         conf_mat = confusion_matrix(self.test_labels, self.test_preds)

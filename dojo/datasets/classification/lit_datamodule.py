@@ -1,14 +1,12 @@
 import multiprocessing
 import os
-import subprocess
-from typing import Callable, Literal, Optional
+from typing import Callable, Optional
 
 import lightning as L
 from datasets import load_dataset
 from torch.utils.data import DataLoader
 
-import wandb
-from dojo.utils import split_hf_dataset, use_artifact
+from dojo.utils import split_hf_dataset
 
 from .main import ClassificationDataset
 
@@ -26,7 +24,6 @@ class ClassificationLitDataModule(L.LightningDataModule):
         batch_size: int = 16,
         num_workers: int = multiprocessing.cpu_count(),
         s3_folder: str = "s3://ai-data-log/dojo-testing",
-        log_dataset: bool = False,
     ) -> None:
         super().__init__()
 
@@ -58,13 +55,6 @@ class ClassificationLitDataModule(L.LightningDataModule):
             )
             self.dataset_idx_to_class = self.train_dataset.idx_to_class
             self.num_classes = len(self.dataset_idx_to_class)
-            if self.hparams["log_dataset"]:
-                self.log_version(
-                    self.trainer.logger,
-                    local_dataset_dir=train_dir,
-                    stage=stage,
-                    max_objects=len(self.train_dataset) + len(self.val_dataset),
-                )
 
         elif stage == "test":
             test_dir = self.hparams["test_dataset_dir"]
@@ -73,13 +63,7 @@ class ClassificationLitDataModule(L.LightningDataModule):
             self.test_dataset = ClassificationDataset(
                 dataset_dir=test_dir, image_size=self.hparams["image_size"], cache=self.hparams["cache"]
             )
-            if self.hparams["log_dataset"]:
-                self.log_version(
-                    self.trainer.logger,
-                    local_dataset_dir=test_dir,
-                    stage=stage,
-                    max_objects=len(self.test_dataset),
-                )
+            self.num_classes = len(self.test_dataset.idx_to_class)
         elif stage == "predict":
             self.predict_dataset = ClassificationDataset(
                 dataset_dir=self.hparams["predict_dataset_dir"],
@@ -117,20 +101,3 @@ class ClassificationLitDataModule(L.LightningDataModule):
 
     def load_state_dict(self, state_dict):
         self.dataset_idx_to_class = state_dict["dataset_idx_to_class"]
-
-    # todo: version logging only works when checksum=True
-    def log_version(
-        self,
-        logger: L.pytorch.loggers.WandbLogger,
-        local_dataset_dir: str,
-        stage: Literal["fit", "test"],
-        max_objects: int,
-    ):
-        use_artifact(
-            f"dataset-{stage}",
-            "dataset",
-            f"file://{local_dataset_dir}",
-            True,
-            logger,
-            max_objects=max_objects,
-        )

@@ -62,9 +62,10 @@ class ClassificationDatasetPreprocessor:
                 os.makedirs(os.path.dirname(output_fpath), exist_ok=True)
 
                 if self._should_skip_sample(sample):
-                    continue
+                    pass
+                else:
+                    sample["image"] = self._transform_sample_image(sample)
 
-                sample["image"] = self._transform_sample_image(sample)
                 sample["image"].save(output_fpath)
             except Exception as e:
                 print(f"{e = }, {sample = }")

@@ -7,13 +7,13 @@ resume_ckpt_fpath: null
 preprocess:
   longest_max_size: null
   smallest_max_size: 224
-  dataset_dir: '/home/ubuntu/members/amar/projects/auto-classification-interior_subroi/data/v1'
+  dataset_dir: /home/ubuntu/members/amar/projects/auto-classification-window_reflection/data/raw
   output_dir: ${preprocess.dataset_dir}-preprocessed
 trainer:
   precision: 16-mixed
-  max_epochs: 10
+  max_epochs: 100
 model:
-  num_classes: 10
+  num_classes: 3
   lr: 3e-8
 dataset:
   train_dataset_dir: /home/ubuntu/members/amar/dojo/test/cifar10-images/train2
@@ -24,7 +24,7 @@ dataset:
   log_dataset: True
   train_transform: conf/transform/default.yaml
 logger:
-  project: common-classification-test-dojo-v2
+  project: auto-classification-window_reflection
   id: null
   resume: ${resume}
   job_type: ${task}
@@ -34,7 +34,8 @@ callbacks:
     save_best: True
     save_latest: True
     save_every_n_epochs: 0
-  other_callbacks: [
-    'classification-generate_test_report',
-    'classification-validate_architecture'
-  ]
+  other_callbacks:
+    - classification-generate_test_report:
+        max_num_images_per_label_pred: 10
+    - classification-validate_architecture
+    - classification-log_artifacts_callback
