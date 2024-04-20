@@ -50,12 +50,12 @@ class LogArtifactsCallback(Callback):
 
     def on_save_checkpoint(self, trainer, pl_module, checkpoint):
         for v in checkpoint["callbacks"].values():
-            epoch = get_details_from_model_path(v["best_model_path"], from_path=True).epoch
-            epoch = epoch_to_dojo_alias_version(epoch)
-            logger = trainer.logger
-
             # we are not tracking changes in the actual weights, only their path
             if v["best_model_path"] and not os.path.exists(v["best_model_path"]):
+                epoch = get_details_from_model_path(v["best_model_path"], from_path=True).epoch
+                epoch = epoch_to_dojo_alias_version(epoch)
+                logger = trainer.logger
+
                 log_artifact(
                     artifact_name=MODEL_RAW_ARTIFACT_NAME(logger),
                     artifact_type=MODEL_RAW_ARTIFACT_TYPE,

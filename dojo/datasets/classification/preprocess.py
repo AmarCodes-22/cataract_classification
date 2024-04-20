@@ -27,9 +27,10 @@ class ClassificationDatasetPreprocessor:
         self.longest_max_size = longest_max_size
         self.smallest_max_size = smallest_max_size
         self.dataset_dir = dataset_dir
-        self.output_dir = os.path.join(
-            os.path.dirname(dataset_dir),
-            os.path.basename(dataset_dir) + "-preprocessed" if output_dir is None else output_dir,
+        self.output_dir = (
+            os.path.join(os.path.dirname(dataset_dir), os.path.basename(dataset_dir) + "-preprocessed")
+            if output_dir is None
+            else output_dir
         )
 
         self.dataset = load_dataset("imagefolder", data_dir=self.dataset_dir, split="train")

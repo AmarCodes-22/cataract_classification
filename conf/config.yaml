@@ -1,33 +1,37 @@
 project_type: classification
 task: preprocess
 resume: False
-resume_epoch: best
+resume_epoch: null
 resume_ckpt_fpath: null
 
 preprocess:
   longest_max_size: null
   smallest_max_size: 224
-  dataset_dir: /home/ubuntu/members/amar/projects/auto-classification-window_reflection/data/raw
+  dataset_dir: data/raw
   output_dir: ${preprocess.dataset_dir}-preprocessed
+
 trainer:
   precision: 16-mixed
-  max_epochs: 100
+  max_epochs: 5
+
 model:
-  num_classes: 3
+  num_classes: 10
   lr: 3e-8
+
 dataset:
-  train_dataset_dir: /home/ubuntu/members/amar/dojo/test/cifar10-images/train2
+  train_dataset_dir: data/raw-preprocessed/train
   val_ratio: 0.05
-  test_dataset_dir: null
+  test_dataset_dir: data/raw-preprocessed/test
   predict_dataset_dir: null
   batch_size: 16
-  log_dataset: True
   train_transform: conf/transform/default.yaml
+
 logger:
-  project: auto-classification-window_reflection
+  project: ???
   id: null
   resume: ${resume}
   job_type: ${task}
+
 callbacks:
   checkpoints:
     monitor_metric: val/acc

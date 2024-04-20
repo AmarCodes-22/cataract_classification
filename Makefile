@@ -12,5 +12,5 @@ update_dataset:
 
 env_name=amar-wr
 dev_env:
-	conda create -n $(env_name) python=3.12 -y
+	conda create -n $(env_name) python=3.10 -y
 	conda run -n $(env_name) --no-capture-output --live-stream pip install -e .
