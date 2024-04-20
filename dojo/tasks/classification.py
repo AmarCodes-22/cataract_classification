@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from lightning import Trainer
 from lightning.pytorch import Trainer
-from lightning.pytorch.callbacks import Callback
+from lightning.pytorch.callbacks import Callback, ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig, OmegaConf
 
@@ -63,21 +63,16 @@ def initialize_modules(
     else:
         dataset = None
 
-    callbacks = load_checkpoint_callbacks(checkpoints_dir=os.path.join(exp_dir, "fit"), **cfg.callbacks.checkpoints)
-
-    # todo: make each type of callback instantiate and validate themselves based on config values
-    for callback in cfg.callbacks.other_callbacks:
-        if isinstance(callback, DictConfig):
-            callback = OmegaConf.to_container(callback, resolve=True)
-
-            callback_key = str(list(callback.keys())[0])
-            callback_kwargs = callback[callback_key]
-
-            callback_class = key_to_callback_class[callback_key]
-            callbacks.append(callback_class(**callback_kwargs))
+    callbacks = list()
+    for callback_group, callbacks_config in cfg.callbacks.items():
+        if callback_group == "checkpoints":
+            for _, kwargs in callbacks_config.items():
+                dirpath = os.path.join(exp_dir, "fit")
+                callbacks.append(ModelCheckpoint(**kwargs, dirpath=dirpath))
         else:
-            callback_class = key_to_callback_class[callback]
-            callbacks.append(callback_class())
+            for callback_name, kwargs in callbacks_config.items():
+                callback_key = f"{callback_group}-{callback_name}"
+                callbacks.append(key_to_callback_class[callback_key](**kwargs if kwargs is not None else {}))
 
     trainer = Trainer(logger=logger, callbacks=callbacks, **cfg.trainer)
 

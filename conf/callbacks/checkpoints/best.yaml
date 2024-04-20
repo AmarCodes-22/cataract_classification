@@ -1,0 +1,6 @@
+best:
+  monitor: val/acc
+  save_top_k: 1
+  mode: max
+  filename: epoch_best
+  auto_insert_metric_name: False

@@ -1,0 +1,6 @@
+latest:
+  monitor: global_step
+  save_top_k: 1
+  mode: max
+  filename: epoch_latest
+  auto_insert_metric_name: False

@@ -20,8 +20,6 @@ class GenerateTestReportCallback(Callback):
         self.label_pred_to_image = dict()
         self.max_num_images_per_label_pred = max_num_images_per_label_pred
 
-        print("Initialized GenerateTestReportCallback")
-
     def on_test_batch_end(self, trainer, pl_module, output, batch, batch_idx, dataloader_idx=0):
         self.test_preds.extend(output["preds"].cpu().numpy())
         self.test_labels.extend(output["labels"].cpu().numpy())

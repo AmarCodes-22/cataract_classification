@@ -39,12 +39,3 @@ def assert_valid_config(cfg, valid_callback_keys: List[str]):
     assert (
         project_type in VALID_PROJECT_TYPES
     ), f"Invalid project type: {project_type}. Must be one of {VALID_PROJECT_TYPES}"
-
-    for key in cfg.callbacks.other_callbacks:
-        if isinstance(key, str):
-            assert key in valid_callback_keys, f"Invalid callback key: {key}. Must be one of {valid_callback_keys}"
-        elif isinstance(key, DictConfig):
-            assert len(key) == 1, f"Invalid callback key: {key}. Must be a dictionary with a single key"
-            assert (
-                list(key.keys())[0] in valid_callback_keys
-            ), f"Invalid callback key: {key}. Must be one of {valid_callback_keys}"

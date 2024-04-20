@@ -1,0 +1,2 @@
+generate_test_report:
+  max_num_images_per_label_pred: 10

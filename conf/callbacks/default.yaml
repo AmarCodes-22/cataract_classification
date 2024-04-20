@@ -1,0 +1,9 @@
+defaults:
+  - checkpoints:
+    - best
+    - latest
+  - common:
+    - log_artifacts_callback
+  - classification:
+    - generate_test_report
+    - validate_architecture

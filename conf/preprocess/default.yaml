@@ -1,0 +1,4 @@
+longest_max_size: null
+smallest_max_size: 224
+dataset_dir: data/raw
+output_dir: ${preprocess.dataset_dir}-preprocessed
