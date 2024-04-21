@@ -14,3 +14,13 @@ env_name=amar-wr
 dev_env:
 	conda create -n $(env_name) python=3.10 -y
 	conda run -n $(env_name) --no-capture-output --live-stream pip install -e .
+
+project_name=
+sweep:
+	python -m wandb sweep --project ${project_name} conf/sweep.yaml
+
+entity=spyne-ai
+sweep_id=
+count=5
+agent:
+	python -m wandb agent --count ${count} ${entity}/${project_name}/${sweep_id}
