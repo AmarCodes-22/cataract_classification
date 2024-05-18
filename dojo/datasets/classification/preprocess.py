@@ -33,7 +33,7 @@ class ClassificationDatasetPreprocessor:
             else output_dir
         )
 
-        self.dataset = load_dataset("imagefolder", data_dir=self.dataset_dir, split="train")
+        self.dataset_dict = load_dataset("imagefolder", data_dir=self.dataset_dir)
 
         if self.longest_max_size is not None:
             self.transform = A.Compose([A.LongestMaxSize(max_size=self.longest_max_size)])
@@ -56,20 +56,21 @@ class ClassificationDatasetPreprocessor:
     def process_dataset(self):
         self.move_non_image_files()
 
-        for sample in tqdm(self.dataset):
-            try:
-                input_fpath = sample["image"].filename
-                output_fpath = self._get_output_fpath(input_fpath)
-                os.makedirs(os.path.dirname(output_fpath), exist_ok=True)
+        for split in self.dataset_dict:
+            for sample in tqdm(self.dataset_dict[split], desc=f"Processing {split} samples"):
+                try:
+                    input_fpath = sample["image"].filename
+                    output_fpath = self._get_output_fpath(input_fpath)
+                    os.makedirs(os.path.dirname(output_fpath), exist_ok=True)
 
-                if self._should_skip_sample(sample):
-                    pass
-                else:
-                    sample["image"] = self._transform_sample_image(sample)
+                    if self._should_skip_sample(sample):
+                        pass
+                    else:
+                        sample["image"] = self._transform_sample_image(sample)
 
-                sample["image"].save(output_fpath)
-            except Exception as e:
-                print(f"{e = }, {sample = }")
+                    sample["image"].save(output_fpath)
+                except Exception as e:
+                    print(f"{e = }, {sample = }")
 
     def _get_output_fpath(self, input_fpath: str):
         return input_fpath.replace(self.dataset_dir, self.output_dir)
@@ -83,3 +84,6 @@ class ClassificationDatasetPreprocessor:
 
     def _transform_sample_image(self, sample):
         return Image.fromarray(self.transform(image=np.array(sample["image"]))["image"])
+
+    def __len__(self):
+        return sum(len(self.dataset_dict[split]) for split in self.dataset_dict)

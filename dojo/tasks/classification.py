@@ -46,7 +46,7 @@ def initialize_modules(
     exp_dir = get_exp_dir(logger)
     resume_ckpt_fpath = get_resume_ckpt_fpath(cfg, exp_dir)
 
-    if resume_ckpt_fpath is not None:
+    if resume_ckpt_fpath is not None and cfg.task == "train":
         resume_ckpt_epoch = get_details_from_model_path(resume_ckpt_fpath).epoch
         cfg.trainer.max_epochs += resume_ckpt_epoch
         print(
@@ -117,7 +117,7 @@ def test(cfg):
     assert modules.dataset is not None, "Dataset must be loaded for testing."
 
     if modules.resume_ckpt_fpath is not None:
-        model_details = get_details_from_model_path(modules.resume_ckpt_fpath)
+        model_details = get_details_from_model_path(modules.resume_ckpt_fpath, from_path=True)
         use_artifact(
             artifact_name=f"{model_details.artifact_name}:{model_details.artifact_version}",
             artifact_type=MODEL_RAW_ARTIFACT_TYPE,
@@ -153,13 +153,14 @@ def preprocess(cfg):
     modules.preprocessor.process_dataset()
     metadata_dict = OmegaConf.to_container(cfg.preprocess, resolve=True)
 
+    # todo: get artifact_name from config
     use_artifact(
         artifact_name="dataset-raw",
         artifact_type="dataset",
         artifact_path=modules.preprocessor.dataset_dir,
         use_checksum=True,
         logger=modules.logger,
-        max_objects=len(modules.preprocessor.dataset),
+        max_objects=len(modules.preprocessor),
     )
 
     log_artifact(
@@ -168,6 +169,6 @@ def preprocess(cfg):
         artifact_path=modules.preprocessor.output_dir,
         use_checksum=True,
         logger=modules.logger,
-        max_objects=len(modules.preprocessor.dataset),
+        max_objects=len(modules.preprocessor),
         metadata_dict=metadata_dict,
     )
