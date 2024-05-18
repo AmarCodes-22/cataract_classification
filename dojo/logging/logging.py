@@ -34,12 +34,17 @@ def use_artifact(
     logger: WandbLogger,
     max_objects: int,
 ):
-    if len(artifact_name.split(":")) == 1:  # artifact_name does not contain a version
-        artifact = wandb.Artifact(artifact_name, type=artifact_type)
-        artifact.add_reference(f"dojo://{artifact_path}", name="/", checksum=False)
-        artifact_name = f"{artifact_name}:latest"
+    try:
+        hostname = os.uname()[1]
 
-    logger.use_artifact(artifact_name)
+        if len(artifact_name.split(":")) == 1:  # artifact_name does not contain a version
+            artifact = wandb.Artifact(artifact_name, type=artifact_type)
+            artifact.add_reference(f"dojo://{hostname}:{os.path.abspath(artifact_path)}", name="/", checksum=False)
+            logger.use_artifact(artifact)
+        else:
+            logger.use_artifact(artifact_name)
+    except Exception as e:
+        print(f"Exception: {e}")
 
 
 def log_artifact(
@@ -52,13 +57,17 @@ def log_artifact(
     metadata_dict: Optional[dict] = None,
     artifact_aliases: Optional[List[str]] = None,
 ):
-    artifact = wandb.Artifact(artifact_name, type=artifact_type)
-    artifact.add_reference(f"dojo://{artifact_path}", name="/", checksum=False)
+    try:
+        hostname = os.uname()[1]
+        artifact = wandb.Artifact(artifact_name, type=artifact_type)
+        artifact.add_reference(f"dojo://{hostname}:{os.path.abspath(artifact_path)}", name="/", checksum=False)
 
-    if metadata_dict is not None:
-        artifact.metadata.update(metadata_dict)
+        if metadata_dict is not None:
+            artifact.metadata.update(metadata_dict)
 
-    logger.experiment.log_artifact(artifact, aliases=artifact_aliases)
+        logger.experiment.log_artifact(artifact, aliases=artifact_aliases)
+    except Exception as e:
+        print(f"Exception: {e}")
 
 
 def get_resume_ckpt_epoch(resume_ckpt_fpath, from_path=False):
