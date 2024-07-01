@@ -1,0 +1,44 @@
+{
+    "image_url": null,
+    "image_file": null,
+    "bg_id": 70481,
+    "bg_replacement_backgound_id": null,
+    "brightness": null,
+    "roi": "detect",
+    "skip_interior_when_roi_detect": null,
+    "skip_classes": null,
+    "three_60": null,
+    "logo_url": null,
+    "window_correction2": "0",
+    "numberplate_config": "0",
+    "seat_generation": null,
+    "car_model": null,
+    "nerf_360": null,
+    "auto_brightness": null,
+    "save_params": {
+      "extension": ".png",
+      "quality": 100,
+      "input_resolution": false
+    },
+    "dynamic_place": null,
+    "sku_tyre_height": null,
+    "wall_idx": null,
+    "wall_logo_url": null,
+    "img_info": null,
+    "floor_intact": null,
+    "custom_wall": null,
+    "Exposure_Correction": null,
+    "Color_Correction": null,
+    "seat_gen_cls": null,
+    "crop_processing": null,
+    "retain_antenna": true,
+    "rear_view_processing": null,
+    "force_process": null,
+    "exposure_correction_params": {
+      "exposure_class": "high",
+      "correction_method": "exposure_fusion"
+    },
+    "window_process_model": {
+      "use_v3": true
+    }
+  }
