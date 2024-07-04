@@ -77,4 +77,4 @@ class GenerateTestReportCallback(Callback):
             plt.tight_layout()  # Adjust layout to prevent cutoff
             plt.savefig(tmp.name)
             img = Image.open(tmp.name)
-            return img
+        return img
