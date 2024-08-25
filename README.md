@@ -2,7 +2,7 @@
 1. Use the Makefile target `make dev_env` to setup the environment. Add the conda env name inside the Makefile
 2. You can also use the requirements.txt file to setup the environment using `pip install -r requirements.txt`
 
-# Training
+# Model development
 Entrypoint - `launch_task.py` and `conf/config.yaml`
 
 For training, Change the task to `train` inside config.yaml and run `python launch_task.py`
