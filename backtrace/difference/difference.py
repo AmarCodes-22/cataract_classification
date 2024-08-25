@@ -1,25 +1,30 @@
 import os
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 import cv2
 import numpy as np
-from concurrent.futures import ThreadPoolExecutor, as_completed
+
 
 class BacktraceProcessor:
     def __init__(self):
-        self.backtrace_dir = os.getenv('BACKTRACE_DIR')
-        self.without_backtrace_dir = os.getenv('WITHOUT_BACKTRACE_DIR')
-        self.ai_dash_dir = os.getenv('AI_DASH_DIR')
-        self.manual_dir = os.getenv('MANUAL_DIR')
-        self.diff_pass_dir = os.getenv('DIFFERENCE_PASS_DIR')
-        self.diff_fail_dir = os.getenv('DIFFERENCE_FAIL_DIR')
+        self.backtrace_dir = os.getenv("BACKTRACE_DIR")
+        self.without_backtrace_dir = os.getenv("WITHOUT_BACKTRACE_DIR")
+        self.ai_dash_dir = os.getenv("AI_DASH_DIR")
+        self.manual_dir = os.getenv("MANUAL_DIR")
+        self.diff_pass_dir = os.getenv("DIFFERENCE_PASS_DIR")
+        self.diff_fail_dir = os.getenv("DIFFERENCE_FAIL_DIR")
 
     def create_directory(self, directory_name):
         if not os.path.exists(directory_name):
             os.makedirs(directory_name)
-    
+
     def compare_images(self, ai_image, manual_image):
-        path_result = os.path.join(self.diff_pass_dir if ai_image.startswith(self.backtrace_dir) else self.diff_fail_dir, os.path.basename(ai_image))
-        
+        path_result = os.path.join(
+            self.diff_pass_dir if ai_image.startswith(self.backtrace_dir) else self.diff_fail_dir,
+            os.path.basename(ai_image),
+        )
+
         if not os.path.exists(path_result):
 
             image1 = cv2.imread(ai_image)
@@ -53,7 +58,12 @@ class BacktraceProcessor:
 
         common_images = images1.intersection(images2)
         with ThreadPoolExecutor(max_workers=6) as executor:
-            futures = {executor.submit(self.compare_images, os.path.join(images_dir1, image_name), os.path.join(images_dir2, image_name)): image_name for image_name in common_images}
+            futures = {
+                executor.submit(
+                    self.compare_images, os.path.join(images_dir1, image_name), os.path.join(images_dir2, image_name)
+                ): image_name
+                for image_name in common_images
+            }
             for future in as_completed(futures):
                 future.result()
 
@@ -66,8 +76,8 @@ class BacktraceProcessor:
                 executor.submit(self.process_images, self.backtrace_dir, self.without_backtrace_dir, self.diff_pass_dir)
                 executor.submit(self.process_images, self.ai_dash_dir, self.manual_dir, self.diff_fail_dir)
 
-            if os.path.exists('difference.flag'):
-                status =  True
+            if os.path.exists("difference.flag"):
+                status = True
 
         print("Bulk processing complete. Executing final checks...")
         self.final_check_and_process()
@@ -80,7 +90,6 @@ class BacktraceProcessor:
         self.process_images(self.ai_dash_dir, self.manual_dir, self.diff_fail_dir)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     processor = BacktraceProcessor()
     processor.run()
-

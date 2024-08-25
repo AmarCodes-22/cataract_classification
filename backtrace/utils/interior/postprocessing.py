@@ -1,13 +1,15 @@
 import os
-import cv2
 import shutil
+from uuid import uuid4
+
+import cv2
 import numpy as np
 from PIL import Image
-from uuid import uuid4
 from skimage import exposure
 
+
 def mask_process_interior(mask, ori, apply_dilate=False, rem_out=True):
-    temp_path = '/tmp'
+    temp_path = "/tmp"
     mask = np.stack([mask, mask, mask], -1)
     uuid_prefix = str(uuid4())
     dir_path = os.path.join(temp_path, uuid_prefix)
@@ -43,7 +45,7 @@ def mask_process_interior(mask, ori, apply_dilate=False, rem_out=True):
         mask = exposure.rescale_intensity(mask, in_range=(180, 255), out_range=(0, 255)).astype(np.uint8)
 
         # out = np.dstack((ori, mask))
-        
+
     finally:
         shutil.rmtree(dir_path, ignore_errors=True)
 

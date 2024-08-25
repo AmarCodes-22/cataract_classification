@@ -3,7 +3,7 @@
 quality:
 	pre-commit run --all-files
 
-project_name=common-classification-test-dojo-v2
+project_name=jivi-ass
 
 s3_uri=s3://ai-sagemaker-datasets/dojo/$(project_name)
 local_data_path=data/raw/

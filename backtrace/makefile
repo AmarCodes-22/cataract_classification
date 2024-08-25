@@ -1,19 +1,19 @@
 .PHONY: run setup run_backtrace run_difference run_mask_refinement clean
 
-API_URL ?= 
-CSV_PATH ?= 
-PAYLOAD_FILE ?= 
-BACKTRACE_DIR ?= 
+API_URL ?=
+CSV_PATH ?=
+PAYLOAD_FILE ?=
+BACKTRACE_DIR ?=
 WITHOUT_BACKTRACE_DIR ?=
-AI_DASH_DIR ?= 
+AI_DASH_DIR ?=
 MANUAL_DIR ?=
-PASS_IMAGES_DIR ?= 
-FAIL_IMAGES_DIR ?= 
+PASS_IMAGES_DIR ?=
+FAIL_IMAGES_DIR ?=
 DIFFERENCE_PASS_DIR ?=
-DIFFERENCE_FAIL_DIR ?= 
-MASK_PASS_DIR ?= 
-MASK_FAIL_DIR ?= 
-MODEL_PATH ?= 
+DIFFERENCE_FAIL_DIR ?=
+MASK_PASS_DIR ?=
+MASK_FAIL_DIR ?=
+MODEL_PATH ?=
 
 setup:
 	@echo "Creating necessary directories..."

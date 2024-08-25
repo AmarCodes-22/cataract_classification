@@ -5,5 +5,5 @@ predict_dataset_dir: null
 train_transform: conf/transform/default.yaml
 cache: False
 image_size: 224
-batch_size: 64
+batch_size: 2
 s3_folder: s3://ai-data-log/dojo-testing

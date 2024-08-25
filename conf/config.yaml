@@ -1,7 +1,7 @@
 project_type: classification
-task: preprocess
-resume: False
-resume_epoch: null
+task: export
+resume: True
+resume_epoch: best
 resume_ckpt_fpath: null
 
 defaults:
@@ -12,7 +12,7 @@ defaults:
   - callbacks: default
 
 logger:
-  project: ???
-  id: null
+  project: common-classification-jivi_assessment
+  id: 4ev5scga
   resume: ${resume}
   job_type: ${task}

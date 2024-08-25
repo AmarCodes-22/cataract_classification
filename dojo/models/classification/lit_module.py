@@ -217,7 +217,7 @@ class ClassificationLitModule(L.LightningModule):
             err_msg="The outputs do not match!",
         )
 
-        self.log_version(logger, resume_ckpt_fpath, traced_save_fpath)
+        # self.log_version(logger, resume_ckpt_fpath, traced_save_fpath)
 
     def log_version(self, logger: L.pytorch.loggers.WandbLogger, resume_ckpt_fpath: str, traced_ckpt_fpath: str):
         # * Store raw model on s3

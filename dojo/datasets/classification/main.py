@@ -36,14 +36,13 @@ class ClassificationDataset(TorchDataset):
         if not drop_labels:
             self.idx_to_class = {i: name for i, name in enumerate(self.dataset.features["label"].names)}
 
-        util_transform = A.Compose([A.Resize(height=image_size, width=image_size), A.ToFloat()])
+        util_transform = A.Compose([A.Resize(height=image_size, width=image_size), A.ToFloat(), ToTensorV2()])
 
         if isinstance(transform, str):
             assert os.path.exists(transform), f"{transform = }"
             transform = load_transform(transform)
 
         self.transform = transform if transform is not None else util_transform
-        self.transform = A.Compose([self.transform, ToTensorV2()])
 
         self.cache = cache
         self.samples: Union[DatasetDict, dict] = dict()

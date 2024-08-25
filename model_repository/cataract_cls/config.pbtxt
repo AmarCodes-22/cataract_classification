@@ -1,0 +1,39 @@
+name: "cataract_cls"
+platform: "onnxruntime_onnx"
+
+max_batch_size: 8
+dynamic_batching {
+  preferred_batch_size: [1,2,4,8]
+}
+
+input [
+  {
+    name: "input"
+    data_type: TYPE_UINT8
+    dims: [ 224, 224, 3 ]
+  }
+]
+output [
+  {
+    name: "output"
+    data_type: TYPE_FP32
+    dims: [ 2 ]
+  }
+]
+
+model_warmup [
+  {
+    name: "input"
+    batch_size: 1
+    inputs {
+      key: "input"
+      value: {
+        data_type: TYPE_UINT8
+        dims: [224,224,3]
+        random_data: true
+      }
+    }
+    count: 4
+  }
+]
+version_policy: { all { }}

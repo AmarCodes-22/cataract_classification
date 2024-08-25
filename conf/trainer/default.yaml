@@ -1,2 +1,2 @@
 precision: 16-mixed
-max_epochs: 5
+max_epochs: 50
